@@ -5,6 +5,7 @@ import dotenv       from "dotenv";
 import rateLimit    from "express-rate-limit";
 import { connectDB }          from "./config/db.js";
 import { sanitizeInput }      from "./middleware/sanitize.js";
+import { getMailStatus }      from "./utils/mailer.js";
 import contactRoutes          from "./routes/contact.js";
 import githubRoutes           from "./routes/github.js";
 import profileRoutes          from "./routes/profile.js";
@@ -61,12 +62,10 @@ const chatLimiter    = rateLimit({ windowMs:  5 * 60 * 1000, limit: 60, message:
 app.use("/api", globalLimiter);
 
 // ── Health ────────────────────────────────────────────────────────────────────
-app.get("/api/health", (req, res) => res.json({
-  ok: true,
-  service: "portfolio-api",
-  mailConfigured: Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
-  ts: new Date(),
-}));
+app.get("/api/health", (req, res) => {
+  const mail = getMailStatus();
+  return res.json({ ok: true, service: "portfolio-api", mailConfigured: mail.configured, mailProvider: mail.provider, ts: new Date() });
+});
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/contact",  contactLimiter, contactRoutes);

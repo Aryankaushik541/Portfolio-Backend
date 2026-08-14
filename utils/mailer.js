@@ -2,6 +2,10 @@ import nodemailer from "nodemailer";
 
 let transporter = null;
 
+export function getMailStatus() {
+  return { provider: "gmail", configured: Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) };
+}
+
 // Lazily create a single reusable transporter. Using a Gmail account with an
 // App Password (NOT your normal Gmail password — generate one at
 // https://myaccount.google.com/apppasswords after enabling 2-Step Verification).
@@ -94,13 +98,17 @@ function buildOtpEmailHtml({ otp, minutesValid, appName }) {
 
 export async function sendOtpEmail({ to, otp, minutesValid = 10 }) {
   const appName = process.env.APP_NAME || "Portfolio Admin";
+  const subject = `${otp} is your sign-in code`;
+  const text = `Your sign-in code is ${otp}. It is valid for ${minutesValid} minutes. If you didn't request this, ignore this email.`;
+  const html = buildOtpEmailHtml({ otp, minutesValid, appName });
+
   const t = getTransporter();
 
   await t.sendMail({
     from: `"${appName}" <${String(process.env.GMAIL_USER || "").trim()}>`,
     to,
-    subject: `${otp} is your sign-in code`,
-    text: `Your sign-in code is ${otp}. It is valid for ${minutesValid} minutes. If you didn't request this, ignore this email.`,
-    html: buildOtpEmailHtml({ otp, minutesValid, appName }),
+    subject,
+    text,
+    html,
   });
 }
