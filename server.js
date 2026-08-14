@@ -87,5 +87,5 @@ app.use((err, req, res, next) => {
 });
 
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 API running on https://portfolio-backend-69v7.onrender.com`));
+  app.listen(PORT, () => console.log(`🚀 API running on https://portfolio-backend-lb5u.vercel.app`));
 });
