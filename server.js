@@ -83,5 +83,5 @@ app.use((err, req, res, next) => {
 });
 
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 API running on http://localhost:${PORT}`));
+  app.listen(PORT, () => console.log(`🚀 API running on https://portfolio-backend-69v7.onrender.com`));
 });
