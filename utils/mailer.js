@@ -8,8 +8,10 @@ let transporter = null;
 function getTransporter() {
   if (transporter) return transporter;
 
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
+  const user = String(process.env.GMAIL_USER || "").trim();
+  // Google displays app passwords with spaces for readability; SMTP requires
+  // the 16-character value without them. Render may preserve pasted spaces.
+  const pass = String(process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
 
   if (!user || !pass) {
     throw new Error(
@@ -18,8 +20,13 @@ function getTransporter() {
   }
 
   transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE !== "false",
     auth: { user, pass },
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
   });
 
   return transporter;
@@ -90,7 +97,7 @@ export async function sendOtpEmail({ to, otp, minutesValid = 10 }) {
   const t = getTransporter();
 
   await t.sendMail({
-    from: `"${appName}" <${process.env.GMAIL_USER}>`,
+    from: `"${appName}" <${String(process.env.GMAIL_USER || "").trim()}>`,
     to,
     subject: `${otp} is your sign-in code`,
     text: `Your sign-in code is ${otp}. It is valid for ${minutesValid} minutes. If you didn't request this, ignore this email.`,

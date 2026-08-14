@@ -82,7 +82,7 @@ router.post("/request-otp", requestOtpLimiter, async (req, res) => {
     // Invalidate any previous unused codes for this email before issuing a new one.
     await OtpToken.updateMany({ email, consumed: false }, { $set: { consumed: true } });
 
-    await OtpToken.create({
+    const otpRecord = await OtpToken.create({
       email,
       otpHash,
       expiresAt,
@@ -94,6 +94,9 @@ router.post("/request-otp", requestOtpLimiter, async (req, res) => {
       await sendOtpEmail({ to: email, otp, minutesValid: OTP_TTL_MINUTES });
     } catch (mailErr) {
       console.error("Failed to send OTP email:", mailErr.message);
+      // Do not leave an unsent OTP behind: it would trigger the resend
+      // cooldown and make a correctly fixed SMTP configuration appear broken.
+      await OtpToken.updateOne({ _id: otpRecord._id }, { $set: { consumed: true } }).catch(() => {});
       return res.status(500).json({ ok: false, error: "Could not send the email. Please try again shortly." });
     }
 
